@@ -72,7 +72,11 @@ resource "aws_instance" "project_jenkins_master" {
   # key_name                  = aws_key_pair.jenkins_ec2_key.key_name
   key_name                    = var.key_name
   associate_public_ip_address = true
-  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
+  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id, aws_security_group.consul_sg.id]
+  # user_data                   = file("${path.module}/files/consul-agent.sh") 
+  iam_instance_profile        = aws_iam_instance_profile.consul-join.name
+  depends_on                  = [aws_instance.project_consul_server]
+
   tags = {
     Name = "Project Jenkins Master"
   }
@@ -83,6 +87,12 @@ resource "aws_instance" "project_jenkins_master" {
     user         = "ubuntu"
     # private_key = file("jenkins_ec2_key")
     private_key = file("hw2_key.pem")
+  }
+
+  provisioner "file" {
+    source      = "./files/consul-agent.sh"
+    # content = file("${path.module}/files/consul-agent.sh")
+    destination = "/home/ubuntu/consul-agent.sh"
   }
 
   provisioner "remote-exec" {
@@ -99,6 +109,11 @@ resource "aws_instance" "project_jenkins_master" {
   provisioner "remote-exec" {
     inline = [
       "sudo docker run -d --restart always -p 8080:8080 -p 50000:50000 -v ${local.jenkins_home_mount} -v ${local.docker_sock_mount} --env ${local.java_opts} jenkins/jenkins"
+    ]
+  }
+  provisioner "remote-exec" {
+    inline = [
+      "sudo sh /home/ubuntu/consul-agent.sh"
     ]
   }
 }

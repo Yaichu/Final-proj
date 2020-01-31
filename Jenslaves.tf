@@ -92,18 +92,7 @@ resource "aws_instance" "project_jenkins_slave" {
     # # bastion_private_key = "${local_file.private_key.sensitive_content}"
   }
 
-  # connection {
-  #   # host                = self.public_ip
-  #   # host                = "${element(aws_instance.project_jenkins_slave.*.public_ip, count.index)}"
-  #   #bastion_host        = aws_instance.bastion_host[count.index] #"${aws_instance.bastion_host.id}"
-  #   # bastion_private_key = local_file.private_key.filename
-  #   # bastion_private_key = aws_key_pair.bastion_key
-  #   # bastion_private_key = "${local_file.private_key.sensitive_content}"
-  #   # user                = "ubuntu"
-  #   # bastion_host        = "${data.aws_instance.bastion.public_ip}"
-  #   # private_key = ${element(local_file.private_key.filename0}
-  # }
-
+ 
   provisioner "remote-exec" {
     inline = [
       "sudo apt-get update -y"

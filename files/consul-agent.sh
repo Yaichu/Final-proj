@@ -56,20 +56,24 @@ tee /etc/consul.d/config.json > /dev/null <<EOF
 }
 EOF
 
-# tee /etc/consul.d/webserver-80.json > /dev/null <<"EOF"
-# {
-#   "advertise_addr": "$PRIVATE_IP",
-#   "data_dir": "/opt/consul",
-#   "datacenter": "opsschool",
-#   "encrypt": "uDBV4e+LbFW3019YKPxIrg==",
-#   "disable_remote_exec": true,
-#   "disable_update_check": true,
-#   "leave_on_terminate": true,
-#   "retry_join": ["provider=aws tag_key=consul_server tag_value=true"],
-#   "enable_script_checks": true,
-#   "server": false
-# }
-# EOF
+
+tee /etc/consul.d/jenkins.json > /dev/null <<EOF
+{"service":
+  {"name": "jenkins",
+   "tags": ["opsschool"],
+   "port": 50000,
+   "check": {
+      "id": "jenkins_check",
+      "name": "jenkins health check",
+      "http": "http://localhost:50000",
+      "method": "GET",
+      "timeout": "1s",
+      "interval": "10s"
+    }
+  }
+}
+
+EOF
 
 # Create user & grant ownership of folders
 useradd consul
