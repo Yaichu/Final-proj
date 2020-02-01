@@ -1,33 +1,25 @@
 node ("linux") {
-    
-    stage('create dockerfile') {
-    sh '''
-    tee Dockerfile <<-'EOF'
-    FROM alpine:latest
-    RUN apk update && \
-    apk add  python3 
-    COPY ./CI-CD/requirements.txt /app/requirements.txt
-    WORKDIR /app
-    RUN pip3 install -r requirements.txt
-    COPY . /app
-    ENTRYPOINT [ "python3" ]
-    WORKDIR /app
-    CMD [ "./CI-CD/app.py" ]
-    EOF
-    '''
-  }
-    
+    def DockerImage = "proj_app"
+    stage('Git') { // Get code from GitLab repository
+        git branch: 'master',
+            url: 'https://github.com/Yaichu/Mid-proj.git'
+    }
+            
     stage("build docker") {
-        customImage = docker.build("proj_app")
+        customImage = docker.build("yaeldoc1/proj_app")
     }
     
-    stage('Run container') {
-        sh "docker stop mid-proj && docker rm mid-proj"
-        sh "docker run -d --restart always --name mid-proj -p 9090:80 proj_app"
+    stage("test") {
+        sh 'docker images'
     }
-
-    stage('test') {
-        sh 'docker ps -a'
+    
+    stage("push to Docker Hub") {
+        withDockerRegistry(registry:[credentialsId: 'dockerhub.yaeldoc1']) {
+            customImage.push()
+        }
     }
-
+    
+    stage('Deploy') { // Deploy the app
+        kubernetesDeploy(kubeconfigId: 'e17f6f2f-5636-4ed1-a2e3-180aa99403e9', configs: 'CI-CD/k8sdeploy.yml', enableConfigSubstitution: true)
+    }
 }
