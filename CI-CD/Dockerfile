@@ -14,4 +14,6 @@ COPY . /app
 
 ENTRYPOINT [ "python3" ]
 
+EXPOSE 5000
+
 CMD [ "app.py" ]
