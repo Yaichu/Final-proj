@@ -50,8 +50,8 @@ resource "aws_instance" "project_consul_server" {
   count                       = 3
   ami                         = data.aws_ami.ubuntu.id
   instance_type               = var.instance_type
-  associate_public_ip_address = true
-  subnet_id                   = "${element(aws_subnet.pub-subnet.*.id, count.index)}"
+  # associate_public_ip_address = true
+  subnet_id                   = "${element(aws_subnet.prv-subnet.*.id, count.index)}"
   iam_instance_profile        = aws_iam_instance_profile.consul-join.name
   vpc_security_group_ids      = [aws_security_group.consul_sg.id]
   key_name                    = var.key_name # aws_key_pair.consul_key.key_name 
