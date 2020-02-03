@@ -105,24 +105,5 @@ resource "aws_instance" "project_jenkins_slave" {
       # "sudo usermod -aG docker ec2-user"
     ]
   }
-
-  # provisioner "remote-exec" {
-  #   inline = [
-  #     "sudo docker run -d -p 8080:8080 -p 50000:50000 -v ${local.jenkins_home_mount} -v ${local.docker_sock_mount} --env ${local.java_opts} jenkins/jenkins"
-  #   ]
-  # }
 }
-
-
-
-
-  # connection {
-  #   type                = "ssh"
-  #   host                = "${self.public_ip}"
-  #   user                = "ec2-user"
-  #   private_key         = file("hw2_key.pem")
-  #   bastion_host        = "${aws_instance.bastion_host.public_ip}"
-  #   bastion_user        = "ubuntu"
-  #   bastion_private_key = "${local_file.private_key.sensitive_content}"
-  # }
 
