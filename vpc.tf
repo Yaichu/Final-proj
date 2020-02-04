@@ -21,10 +21,10 @@ resource "aws_internet_gateway" "gw" {
 
 ## public subnets (2)
 resource "aws_subnet" "pub-subnet" {
-  count             = "${length(var.subnets_cidr_public)}"
-  vpc_id            = "${aws_vpc.vpc-1.id}"
-  cidr_block        = "${element(var.subnets_cidr_public,count.index)}"
-  availability_zone = "${var.availability_zones[count.index]}"
+  count                   = "${length(var.subnets_cidr_public)}"
+  vpc_id                  = "${aws_vpc.vpc-1.id}"
+  cidr_block              = "${element(var.subnets_cidr_public,count.index)}"
+  availability_zone       = "${var.availability_zones[count.index]}"
   map_public_ip_on_launch = true
 
   tags = {
@@ -56,7 +56,7 @@ resource "aws_nat_gateway" "ngw" {
    count         = "${length(var.subnets_cidr_public)}"
    allocation_id = "${element(aws_eip.nat.*.id, count.index)}"
    subnet_id     = "${element(aws_subnet.pub-subnet.*.id, count.index)}"
-   depends_on = ["aws_internet_gateway.gw", "aws_subnet.pub-subnet"]
+   depends_on    = ["aws_internet_gateway.gw", "aws_subnet.pub-subnet"]
 
     tags = {
       Name = "NAT-gw-${count.index+1}"
@@ -83,8 +83,6 @@ resource "aws_route_table" "private_rtb" {
   route {
     cidr_block = "0.0.0.0/0"
     nat_gateway_id = "${element(aws_nat_gateway.ngw.*.id, count.index)}"
-    # nat_gateway_id = "${aws_nat_gateway.ngw.*.id}"
-
   }
 
   tags = {

@@ -7,7 +7,7 @@
 # }
 variable "additional_ip_addresses_for_eks_access" {
   type    = list(string)
-  default = ["192.168.100.1/32"]
+  default = [""]
 }
 # data "aws_subnet_ids" "eks_subnets" {
 #   vpc_id = "${aws_vpc.vpc-1.id}"

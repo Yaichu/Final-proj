@@ -41,7 +41,8 @@
 #    subnet_id              = "${element(aws_subnet.pub-subnet.*.id, 1)}"
 #    vpc_security_group_ids = [aws_security_group.bastion.id]
 # #    availability_zone      = "${data.aws_availability_zones.available.names[count.index]}"
-#    key_name               = "${aws_key_pair.bastion_key.key_name}"
+# #    key_name               = "${aws_key_pair.bastion_key.key_name}"
+#    key_name                    = var.key_name
 #    associate_public_ip_address = true
 
 #    tags = {

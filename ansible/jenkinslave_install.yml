@@ -1,0 +1,58 @@
+---
+- name: docker_role | ubuntu_dist | update apt and install packages to allow apt to use a repository over https
+  apt:
+    update_cache: yes
+    state: latest
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - gnupg-agent
+    - software-properties-common
+
+- name: docker_role | ubuntu_dist | Add Docker's official GPG Key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    id: 0EBFCD88
+    state: present
+
+- name: docker_role | ubuntu_dist | Add Repository
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu {{ansible_distribution_release}} stable #test
+    state: present
+    # codename: "{{ ansible_distribution_release }}"
+    # when: ansible_distribution == "Ubuntu"
+
+- name: docker_role | ubuntu_dist | Update apt and install the latest (specific) docker engine version
+  apt:
+    update_cache: yes
+    state: latest #"{{ docker_version }}"
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+  notify: 
+   - restart docker
+
+- name: docker_role | ubuntu_dist | add user to group
+  user:
+    name: "{{item}}"
+    groups: docker
+    append: yes
+  loop: "{{docker_ubuntu_users}}"
+
+- name: Accept Java 8 License
+  become: yes
+  debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+
+- name: Install Oracle Java 8
+  become: yes
+  apt: name={{item}} state=latest
+  with_items:
+      - oracle-java8-installer
+      - ca-certificates
+      - oracle-java8-set-default
