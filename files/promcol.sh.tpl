@@ -8,8 +8,8 @@ echo "Grabbing IPs..."
 PRIVATE_IP=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
 
 echo "Installing dependencies..."
-apt-get -q update
-apt-get -yq install unzip dnsmasq
+apt-get -qq update 
+apt-get -yqq install unzip dnsmasq
 
 echo "Configuring dnsmasq..."
 cat << EODMCF >/etc/dnsmasq.d/10-consul
@@ -26,6 +26,7 @@ systemctl restart dnsmasq
 # EOF
 
 # systemctl restart systemd-resolved.service
+
 
 echo "Fetching Consul..."
 cd /tmp
@@ -44,17 +45,35 @@ tee /etc/consul.d/config.json > /dev/null <<EOF
 {
   "advertise_addr": "$PRIVATE_IP",
   "data_dir": "/opt/consul",
+  "client_addr": "0.0.0.0",
   "datacenter": "opsschool",
   "encrypt": "uDBV4e+LbFW3019YKPxIrg==",
   "disable_remote_exec": true,
   "disable_update_check": true,
   "leave_on_terminate": true,
   "retry_join": ["provider=aws tag_key=consul_server tag_value=true"],
-  "server": true,
-  "bootstrap_expect": 3,
-  "ui": true,
-  "client_addr": "0.0.0.0"
+  "enable_script_checks": true,
+  "server": false
 }
+EOF
+
+### add promcol service to consul
+tee /etc/consul.d/prometheus.json > /dev/null <<EOF
+{"service":
+  {"id": "prometheus",
+   "name": "promcol",
+   "tags": ["promcol"],
+   "port": 9090,
+   "check": {
+      "id": "tcp",
+      "name": "TCP on port 9090",
+      "tcp": "localhost:9090",
+      "interval": "10s",
+      "timeout": "1s"
+    }
+  }
+}
+
 EOF
 
 # Create user & grant ownership of folders
@@ -84,22 +103,6 @@ TimeoutStopSec=5
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable consul.service
-systemctl start consul.service
-
-# Install (Ansible +) Node Exporter
-cd /tmp
-sudo apt update
-sudo apt install software-properties-common
-sudo apt-add-repository --yes --update ppa:ansible/ansible
-sudo apt install -y ansible
-
-git clone https://github.com/Yaichu/NodeExporter-Ansible.git
-wget https://raw.githubusercontent.com/Yaichu/FilesForProject/master/node_exporter.service
-sudo cp ./node_exporter.service /etc/systemd/system/node_exporter.service
-cd NodeExporter-Ansible/project-node-exporter/
-ansible-playbook -i hosts playbook.yml
-sudo chmod +x /usr/local/bin/node_exporter
 sudo systemctl daemon-reload
-sudo systemctl start node_exporter.service
+sudo systemctl enable consul.service
+sudo systemctl start consul.service

@@ -1,0 +1,21 @@
+# version: "3.4"
+# x-logging:
+#     &default-logging
+#     options:
+#         max-size: '10m'
+#         max-file: '5'
+#     driver: json-file
+
+# services:
+#   grafana:
+#     image: grafana/grafana:6.2.5
+#     ports:
+#         - 3000:3000
+#     volumes:
+#     #      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+#         - grafana_data:/var/lib/grafana
+#     restart: unless-stopped
+#     logging: *default-logging
+
+# volumes:
+#     grafana_data:

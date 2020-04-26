@@ -52,6 +52,14 @@ resource "aws_security_group" "jenkins_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow prometheus UI access from the world"
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -66,14 +74,14 @@ resource "aws_security_group" "jenkins_sg" {
 
 resource "aws_instance" "project_jenkins_master" {
   count                       = 1 #"${length(var.subnets_cidr_private)}"
-  subnet_id                   = "${element(aws_subnet.pub-subnet.*.id, count.index)}"  
-  ami                         = data.aws_ami.ubuntu.id
+  subnet_id                   = "${element(aws_subnet.prv-subnet.*.id, count.index)}"  
+  ami                         = data.aws_ami.ubuntu.id #"ami-06020ba42f0096b0a"
   instance_type               = var.instance_type
   # key_name                  = aws_key_pair.jenkins_ec2_key.key_name
   key_name                    = var.key_name
-  associate_public_ip_address = true
+#   associate_public_ip_address = true
   vpc_security_group_ids      = [aws_security_group.jenkins_sg.id, aws_security_group.consul_sg.id]
-  # user_data                   = file("${path.module}/files/consul-agent.sh") 
+#   user_data                   = file("${path.module}/files/promcol.sh.tpl") 
   iam_instance_profile        = aws_iam_instance_profile.consul-join.name
   depends_on                  = [aws_instance.project_consul_server]
 
@@ -82,17 +90,24 @@ resource "aws_instance" "project_jenkins_master" {
   }
 
   connection {
-    # host = aws_instance.project_jenkins_master.public_ip
-    host         = self.public_ip
-    user         = "ubuntu"
-    # private_key = file("jenkins_ec2_key")
-    private_key = file("hw2_key.pem")
+    type                = "ssh"
+    # host                = "${self.public_ip}"
+    host                = "${self.private_ip}"
+    user                = "ubuntu"
+    private_key         = file("hw2_key.pem")
+    bastion_host        = "${aws_instance.bastion_host.public_ip}"
+    bastion_user        = "ubuntu"
+    bastion_private_key = file("hw2_key.pem")
   }
 
   provisioner "file" {
     source      = "./files/consul-agent.sh"
-    # content = file("${path.module}/files/consul-agent.sh")
     destination = "/home/ubuntu/consul-agent.sh"
+  }
+
+  provisioner "file" {
+    source      = "./ansible/install_nodeEx.sh"
+    destination = "/tmp/install_nodeEx.sh"
   }
 
   provisioner "remote-exec" {
@@ -114,6 +129,12 @@ resource "aws_instance" "project_jenkins_master" {
   provisioner "remote-exec" {
     inline = [
       "sudo sh /home/ubuntu/consul-agent.sh"
+    ]
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo sh /tmp/install_nodeEx.sh"
     ]
   }
 }

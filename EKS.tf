@@ -127,9 +127,22 @@ module "eks" {
   worker_additional_security_group_ids = [aws_security_group.all_worker_mgmt.id]
 }
 resource "null_resource" "example1" {
-  provisioner "local-exec" {
-    command = "aws eks update-kubeconfig --name project_k8s_cluster"
-  }
+
+    # provisioner "file" {
+    #   source      = "./ansible/install_nodeEx.sh"
+    #   destination = "/tmp/install_nodeEx.sh"
+    # }
+
+    # provisioner "remote-exec" {
+    #   inline = [
+    #     "sudo sh /tmp/install_nodeEx.sh"
+    #   ]
+    # }
+
+    provisioner "local-exec" {
+      command = "aws eks update-kubeconfig --name project_k8s_cluster"
+    }
+
 }
 
 # variable "local_exec_interpreter" {

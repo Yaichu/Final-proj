@@ -1,0 +1,52 @@
+# my global config
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+    - targets: ['localhost:9090']
+
+  - job_name: 'node-exporter'
+    consul_sd_configs:
+    - server: 'localhost:8500'
+    # All hosts detected will use port 9100 for node-exporter
+    relabel_configs:
+      - source_labels: ['__address__']
+        separator:     ':'
+        regex:         '(.*):(.*)'
+        target_label:  '__address__'
+        replacement:   '\$1:9100'
+      - source_labels: [__meta_consul_node]
+        target_label: instance
+
+  - job_name: 'consul'
+    consul_sd_configs:
+    - server:   '10.0.10.23:8500'
+      services: ['promcol', 'opsschool']      
+
+#  - job_name: 'node_exporter'
+#    scrape_interval: 15s
+#    static_configs:
+#      - targets: 
+#        - '172.17.0.1:9100'
+#        - '34.207.67.154:9100'
+
+    
+   

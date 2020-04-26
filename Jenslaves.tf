@@ -33,23 +33,24 @@ resource "aws_security_group" "jenkins_slave_sg" {
 resource "aws_instance" "project_jenkins_slave" {
   count                       = "${length(var.subnets_cidr_public)}"
   subnet_id                   = "${element(aws_subnet.pub-subnet.*.id, count.index)}"   
-  ami                         = data.aws_ami.ubuntu.id
+  ami                         = data.aws_ami.ubuntu.id #"ami-039ebaad69ba47109"
   instance_type               = var.instance_type
   # key_name                  = aws_key_pair.jenkins_ec2_key.key_name
   key_name                    = var.key_name
-  associate_public_ip_address = true
-  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
+#   associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id, aws_security_group.jenkins_slave_sg.id]
   tags = {
     Name = "Project Jenkins slave-${count.index+1}"
   }
   connection {
     type                = "ssh"
     host                = "${self.public_ip}"
+    # host                = "${self.private_ip}"
     user                = "ubuntu"
     private_key         = file("hw2_key.pem")
     # bastion_host        = "${aws_instance.bastion_host.public_ip}"
     # bastion_user        = "ubuntu"
-    # bastion_private_key = tls_private_key.bastion_key.private_key_pem
+    # bastion_private_key = file("hw2_key.pem")
 
   # data "template_file" "ansible_hosts" {
   #   template = "${file("./ansible/hosts.tpl")}"
@@ -64,7 +65,6 @@ resource "aws_instance" "project_jenkins_slave" {
 
   }
 
- 
   provisioner "remote-exec" {
     inline = [
       "sudo apt-get update -y",

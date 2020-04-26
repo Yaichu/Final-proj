@@ -35,6 +35,14 @@ resource "aws_security_group" "consul_sg" {
     description = "Allow consul UI access from the world"
   }
 
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow prometheus UI access from the world"
+  }
+
   egress {
     from_port       = 0
     to_port         = 0
@@ -43,6 +51,12 @@ resource "aws_security_group" "consul_sg" {
     description     = "Allow all outside security group"
   }
 }
+# # Create the user-data for the Consul agent
+# data "template_cloudinit_config" "consul_client" {
+#   count    = 1
+#   part {
+#     content = element(data.template_file.consul_client.*.rendered, count.index)
+#   }
 
 ## Create Consul Cluster:
 # Create the consul server
@@ -59,34 +73,45 @@ resource "aws_instance" "project_consul_server" {
   
   
   tags = {
-    Name        = "project-consul-${count.index + 1}"
+    Name        = "project-consul-server-${count.index + 1}"
     consul_server = "true"
   }
+
+    # connection {
+    #     host         = self.public_ip
+    #     user         = "ubuntu"
+    #     private_key = file("hw2_key.pem")
+    # }
+
+#   provisioner "file" {
+#     source      = "/ansible/install_nodeEx.sh"
+#     destination = "/tmp/install_nodeEx.sh"
+#   }
 }
 
 # Create an IAM role for the auto-join
 resource "aws_iam_role" "consul-join" {
-  name               = "opsschool-consul-join1"
+  name               = "opsschool-consul-join66"
   assume_role_policy = file("${path.module}/templates/policies/assume-role.json")
 }
 
 # Create the policy
 resource "aws_iam_policy" "consul-join" {
-  name        = "opsschool-consul-join1"
+  name        = "opsschool-consul-join66"
   description = "Allows Consul nodes to describe instances for joining."
   policy      = file("${path.module}/templates/policies/describe-instances.json")
 }
 
 # Attach the policy
 resource "aws_iam_policy_attachment" "consul-join" {
-  name       = "opsschool-consul-join1"
+  name       = "opsschool-consul-join66"
   roles      = ["${aws_iam_role.consul-join.name}"]
   policy_arn = aws_iam_policy.consul-join.arn
 }
 
 # Create the instance profile
 resource "aws_iam_instance_profile" "consul-join" {
-  name  = "opsschool-consul-join1"
+  name  = "opsschool-consul-join66"
   role = aws_iam_role.consul-join.name
 }
 

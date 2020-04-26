@@ -1,0 +1,40 @@
+---
+- name: Create node_exporter group
+  group:
+    name: node_exporter
+    state: present
+
+- name: Create node_exporter user
+  user:
+    name: node_exporter
+    group: node_exporter
+    append: true
+
+- name: Download node-exporter binary to local folder
+  become: false
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+  delegate_to: localhost
+
+- name: Unpack node-exporter binary
+  become: false
+  unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/tmp"
+    creates: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+  delegate_to: localhost
+
+- name: configure service node_exporter
+  copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+    dest: /usr/local/bin
+  notify: restart node_exporter
+
+- name: start/restart service node_exporter
+  systemd:
+     name: node_exporter
+     state: started
+     daemon_reload: yes
+     enabled: yes
+
