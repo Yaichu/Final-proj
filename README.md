@@ -57,6 +57,7 @@ The architecture is fully cloud based - a VPC with two availability zones and tw
     kubectl get svc -o wide
     kubectl get pod -o wide
     kubectl get nodes
+    
     ```
 - Access Jenkins UI (port 8080) and:
   - install the plugin *Kubernetes Continuous Deploy Plugin* and copy the content of the config file to the credentials window
